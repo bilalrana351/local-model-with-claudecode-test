@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" font-family="Helvetica, Arial, sans-serif" font-size="11">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- host -->
+  <rect x="4" y="4" width="712" height="292" rx="6" fill="none" stroke="#999" stroke-dasharray="4 3"/>
+  <text x="14" y="20" fill="#666">MacBook Pro, M4 Pro, 24 GB unified memory (no cloud model is called)</text>
+
+  <!-- runner -->
+  <rect x="20" y="40" width="150" height="70" rx="4" fill="#f3f3f3" stroke="#333"/>
+  <text x="30" y="58" font-weight="bold">run_agent.py</text>
+  <text x="30" y="74">issue text + prompt</text>
+  <text x="30" y="88">start container, run agent,</text>
+  <text x="30" y="102">save git diff</text>
+
+  <!-- ollama -->
+  <rect x="20" y="180" width="150" height="70" rx="4" fill="#f3f3f3" stroke="#333"/>
+  <text x="30" y="198" font-weight="bold">Ollama :11434</text>
+  <text x="30" y="214">ornith (Ornith-1.5-35B-A3B)</text>
+  <text x="30" y="228">16.5 GB, on the Metal GPU</text>
+  <text x="30" y="242">64K context</text>
+
+  <!-- docker vm -->
+  <rect x="200" y="32" width="340" height="250" rx="6" fill="none" stroke="#333"/>
+  <text x="210" y="48" fill="#333">Docker VM</text>
+
+  <!-- isolated net -->
+  <rect x="214" y="58" width="312" height="150" rx="4" fill="none" stroke="#b33" stroke-dasharray="5 3"/>
+  <text x="222" y="74" fill="#b33">isolated network</text>
+
+  <rect x="226" y="84" width="200" height="80" rx="4" fill="#fff" stroke="#333"/>
+  <text x="236" y="101" font-weight="bold">Issue container</text>
+  <text x="236" y="117">official SWE-bench image</text>
+  <text x="236" y="131">conda env</text>
+  <text x="236" y="149" font-weight="bold">Claude Code 2.1.283</text>
+
+  <rect x="436" y="120" width="84" height="46" rx="4" fill="#fff" stroke="#333"/>
+  <text x="444" y="137" font-weight="bold">socat relay</text>
+  <text x="444" y="151">alias host.</text>
+  <text x="444" y="163">docker.internal</text>
+
+  <!-- harness -->
+  <rect x="226" y="225" width="300" height="54" rx="4" fill="#f3f3f3" stroke="#333"/>
+  <text x="236" y="240" font-weight="bold">swebench 5.0.2 harness</text>
+  <text x="236" y="255">fresh container, adds the hidden tests</text>
+  <text x="236" y="270">passes only if FAIL_TO_PASS and PASS_TO_PASS pass</text>
+
+  <!-- outputs -->
+  <rect x="562" y="40" width="140" height="70" rx="4" fill="#f3f3f3" stroke="#333"/>
+  <text x="572" y="58" font-weight="bold">runs/run1/</text>
+  <text x="572" y="74">transcript.jsonl</text>
+  <text x="572" y="88">patch.diff, meta.json</text>
+  <text x="572" y="102">predictions.jsonl</text>
+
+  <rect x="562" y="222" width="140" height="48" rx="4" fill="#f3f3f3" stroke="#333"/>
+  <text x="572" y="240" font-weight="bold">report.json</text>
+  <text x="572" y="256">resolved: true / false</text>
+
+  <!-- arrows -->
+  <line x1="170" y1="75" x2="224" y2="110" stroke="#333" marker-end="url(#a)"/>
+  <line x1="426" y1="143" x2="434" y2="143" stroke="#333" marker-end="url(#a)"/>
+  <path d="M478,166 L478,202 L172,202" fill="none" stroke="#333" marker-end="url(#a)"/>
+  <text x="232" y="219" fill="#555" font-size="10">model requests to Ollama, port 11434 only</text>
+  <line x1="426" y1="100" x2="560" y2="80" stroke="#333" marker-end="url(#a)"/>
+  <text x="470" y="84" fill="#555" font-size="10">git diff</text>
+  <line x1="632" y1="110" x2="632" y2="220" stroke="#333" stroke-dasharray="3 2"/>
+  <line x1="632" y1="160" x2="528" y2="232" stroke="#333" marker-end="url(#a)"/>
+  <text x="560" y="180" fill="#555" font-size="10">patch</text>
+  <line x1="526" y1="252" x2="560" y2="252" stroke="#333" marker-end="url(#a)"/>
+</svg>

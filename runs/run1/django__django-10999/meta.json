@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-10999",
+  "wall_s": 365.7,
+  "timed_out": false,
+  "patch_lines": 13,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 19,
+  "agent_duration_s": 362.9,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 12391,
+  "max_prompt_tokens": 30278,
+  "tool_calls": {
+    "Bash": 15,
+    "Read": 2,
+    "Edit": 1
+  },
+  "final_message": "The fix is complete and minimal. Here's a summary of what I did:\n\n## Problem\n`parse_duration()` in `django/utils/dateparse.py` failed to match negative durations where the minutes/seconds following negative hours were themselves negative (e.g. `-1:-2:30` returned `None`). The culprit was the `standard_duration_re` lookahead `(?=\\d+:\\d+)`, which required the digits after the hours colon to be strictly positive, so any input with negative hours wasn't matched.\n\n## Fix\nI applied the exact change suggested in the issue, adding `'-?'` to the lookahead so it accepts negative minutes/seconds:\n\n```python\nr'((?:(?P<hours>-?\\d+):)(?=-?\\d+:-?\\d+))?'\n```\n\nEach component already carries its own sign in its capture group (`-?\\d+`), and the existing logic correctly translates those into the resulting `timedelta` \u2014 so the only gap was that hours could never be negated due to the lookahead.\n\n## Verification\n- `-1:-2:30` now parses (was `None`); previously-passing inputs are unchanged.\n- `utils_tests.test_dateparse` \u2014 29 tests OK (including `test_negative`).\n- `utils_tests.test_duration` \u2014 OK.\n- `model_fields.test_durationfield` and `forms_tests.field_tests.test_durationfield` \u2014 15 tests OK (these exercise `parse_duration` end-to-end).\n\nThe change is a single-line, additive regex fix with no regressions. As instructed, I did not modify any files under `/testbed/tests` and did not commit."
+}

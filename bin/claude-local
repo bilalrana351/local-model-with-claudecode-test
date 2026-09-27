@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Run Claude Code against the local Ollama model instead of Anthropic's API.
+# Usage: bin/claude-local [-C dir] [any claude args]   e.g. bin/claude-local -C repo/ -p "fix the bug"
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# -C runs the agent inside another directory (like git -C).
+if [[ "${1:-}" == "-C" ]]; then
+  cd "$2"
+  shift 2
+fi
+MODEL="${LOCAL_MODEL:-ornith}"
+
+# Point Claude Code at Ollama's Anthropic-compatible endpoint.
+export ANTHROPIC_BASE_URL="${OLLAMA_URL:-http://localhost:11434}"
+export ANTHROPIC_AUTH_TOKEN=ollama
+unset ANTHROPIC_API_KEY
+
+# Every model alias maps to the local model, so background calls
+# (titles, summaries, subagents) never go looking for a hosted Claude model.
+export ANTHROPIC_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL"
+export CLAUDE_CODE_SUBAGENT_MODEL="$MODEL"
+
+# No telemetry, error reporting, or update checks leaving the machine.
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
+# Separate config dir: keeps personal settings, MCP servers, skills and
+# CLAUDE.md out of the local model's context window.
+export CLAUDE_CONFIG_DIR="$ROOT/.claude-local"
+mkdir -p "$CLAUDE_CONFIG_DIR"
+
+if ! curl -sf "$ANTHROPIC_BASE_URL/api/tags" >/dev/null; then
+  echo "Ollama is not reachable at $ANTHROPIC_BASE_URL" >&2
+  exit 1
+fi
+
+exec claude --model "$MODEL" --strict-mcp-config "$@"

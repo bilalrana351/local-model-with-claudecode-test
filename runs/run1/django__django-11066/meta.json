@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11066",
+  "wall_s": 89.4,
+  "timed_out": false,
+  "patch_lines": 13,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 7,
+  "agent_duration_s": 85.2,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 1101,
+  "max_prompt_tokens": 19374,
+  "tool_calls": {
+    "Read": 2,
+    "Edit": 1,
+    "Bash": 3
+  },
+  "final_message": "All 59 tests pass. The fix is complete and minimal.\n\n## Summary\n\n**The problem:** In `django/contrib/contenttypes/management/__init__.py`, `RenameContentType._rename()` wraps the content type save in `transaction.atomic(using=db)` but calls `content_type.save(update_fields={'model'})` without passing `using=db`. Since `save()` defaults to the `default` database, the UPDATE was issued against the default connection rather than the migration database (`schema_editor.connection.alias`). With a database router (e.g. a dynamic DB router where no physical `default` database exists), this raised `OperationalError: no such table: django_content_type`.\n\n**The fix:** Pass the migration's database alias explicitly to `save()`:\n\n```python\n# before\ncontent_type.save(update_fields={'model'})\n# after\ncontent_type.save(using=db, update_fields={'model'})\n```\n\nThis is consistent with the rest of `_rename()`, which already scopes the query with `ContentType.objects.db_manager(db)` and checks `router.allow_migrate_model(db, ...)`.\n\nAll contenttypes tests pass (59 tests in `contenttypes_tests`, including `test_operations.py` which exercises the forward/backward `RenameModel` \u2192 `RenameContentType` rename flow and a conflict case). No test files were modified."
+}

@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11099",
+  "wall_s": 100.4,
+  "timed_out": false,
+  "patch_lines": 22,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 15,
+  "agent_duration_s": 97.1,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 2524,
+  "max_prompt_tokens": 19325,
+  "tool_calls": {
+    "Bash": 9,
+    "Read": 3,
+    "Edit": 2
+  },
+  "final_message": "The fix is complete and verified.\n\n## Summary\n\n**Issue:** `ASCIIUsernameValidator` and `UnicodeUsernameValidator` in `/testbed/django/contrib/auth/validators.py` used the regex `r'^[\\w.@+-]+$'`. In Python regex, `$` matches not only the end of the string but also *before a trailing newline*, so usernames ending with a newline (`'bad\\n'`) were incorrectly accepted.\n\n**Fix:** Changed both regexes from `^[\\w.@+-]+$` to `\\A[\\w.@+-]+\\Z`. `\\A` anchors to the start of the string and `\\Z` anchors to the true end, eliminating the trailing-newline quirk.\n\n**Verification:**\n- Reproduced the bug first (`'bad\\n'` returned `None`/valid before the fix).\n- After the fix, valid usernames (`good`, `a.b_c@d+e-f`) still pass, while `'bad\\n'`, `'bad\\r'`, `'\\ngood'`, `'bad\\n\\n'`, and `'good\\r\\n'` are all rejected by both validators.\n- All relevant existing tests pass:\n  - `auth_tests.test_validators` \u2014 22 tests OK\n  - `auth_tests.test_forms` + `test_models` \u2014 109 tests OK\n\nThe change is minimal, confined to the non-test source file, and does not modify anything under `/testbed/tests`."
+}

@@ -1,0 +1,56 @@
+2026-09-27 16:19:43,197 - INFO - Creating container for django__django-10999...
+2026-09-27 16:19:43,232 - INFO - Container for django__django-10999 created: c3c62091529aea220d5f3605380c4f5e09baca16858c5be1cd3710fd412a48be
+2026-09-27 16:19:43,295 - INFO - Container for django__django-10999 started: c3c62091529aea220d5f3605380c4f5e09baca16858c5be1cd3710fd412a48be
+2026-09-27 16:19:43,296 - INFO - Intermediate patch for django__django-10999 written to logs/run_evaluation/gold/gold/django__django-10999/patch.diff, now applying to container...
+2026-09-27 16:19:43,446 - INFO - >>>>> Applied Patch:
+Checking patch django/utils/dateparse.py...
+Applied patch django/utils/dateparse.py cleanly.
+
+2026-09-27 16:19:43,881 - INFO - Git diff before:
+diff --git a/django/utils/dateparse.py b/django/utils/dateparse.py
+index 8d08b7d1d3..f90d952581 100644
+--- a/django/utils/dateparse.py
++++ b/django/utils/dateparse.py
+@@ -29,9 +29,10 @@ datetime_re = re.compile(
+ standard_duration_re = re.compile(
+     r'^'
+     r'(?:(?P<days>-?\d+) (days?, )?)?'
+-    r'((?:(?P<hours>-?\d+):)(?=\d+:\d+))?'
+-    r'(?:(?P<minutes>-?\d+):)?'
+-    r'(?P<seconds>-?\d+)'
++    r'(?P<sign>-?)'
++    r'((?:(?P<hours>\d+):)(?=\d+:\d+))?'
++    r'(?:(?P<minutes>\d+):)?'
++    r'(?P<seconds>\d+)'
+     r'(?:\.(?P<microseconds>\d{1,6})\d{0,6})?'
+     r'$'
+ )
+2026-09-27 16:19:43,881 - INFO - Eval script for django__django-10999 written to logs/run_evaluation/gold/gold/django__django-10999/eval.sh; copying to container...
+2026-09-27 16:20:36,983 - INFO - Test runtime: 53.02 seconds
+2026-09-27 16:20:36,999 - INFO - Test output for django__django-10999 written to logs/run_evaluation/gold/gold/django__django-10999/test_output.txt
+2026-09-27 16:20:37,426 - INFO - Git diff after:
+diff --git a/django/utils/dateparse.py b/django/utils/dateparse.py
+index 8d08b7d1d3..f90d952581 100644
+--- a/django/utils/dateparse.py
++++ b/django/utils/dateparse.py
+@@ -29,9 +29,10 @@ datetime_re = re.compile(
+ standard_duration_re = re.compile(
+     r'^'
+     r'(?:(?P<days>-?\d+) (days?, )?)?'
+-    r'((?:(?P<hours>-?\d+):)(?=\d+:\d+))?'
+-    r'(?:(?P<minutes>-?\d+):)?'
+-    r'(?P<seconds>-?\d+)'
++    r'(?P<sign>-?)'
++    r'((?:(?P<hours>\d+):)(?=\d+:\d+))?'
++    r'(?:(?P<minutes>\d+):)?'
++    r'(?P<seconds>\d+)'
+     r'(?:\.(?P<microseconds>\d{1,6})\d{0,6})?'
+     r'$'
+ )
+2026-09-27 16:20:37,426 - INFO - Grading answer for django__django-10999...
+2026-09-27 16:20:37,445 - INFO - report: {'django__django-10999': {'patch_is_None': False, 'patch_exists': True, 'patch_successfully_applied': True, 'resolved': True, 'infra_failure': False, 'tests_status': {'FAIL_TO_PASS': {'success': ['test_negative (utils_tests.test_dateparse.DurationParseTests)', 'test_parse_postgresql_format (utils_tests.test_dateparse.DurationParseTests)'], 'failure': []}, 'PASS_TO_PASS': {'success': ['test_parse_date (utils_tests.test_dateparse.DateParseTests)', 'test_parse_datetime (utils_tests.test_dateparse.DateParseTests)', 'test_parse_time (utils_tests.test_dateparse.DateParseTests)', 'test_days (utils_tests.test_dateparse.DurationParseTests)', 'test_fractions_of_seconds (utils_tests.test_dateparse.DurationParseTests)', 'test_hours_minutes_seconds (utils_tests.test_dateparse.DurationParseTests)', 'test_iso_8601 (utils_tests.test_dateparse.DurationParseTests)', 'test_minutes_seconds (utils_tests.test_dateparse.DurationParseTests)', 'test_parse_python_format (utils_tests.test_dateparse.DurationParseTests)', 'test_seconds (utils_tests.test_dateparse.DurationParseTests)'], 'failure': []}, 'FAIL_TO_FAIL': {'success': [], 'failure': []}, 'PASS_TO_FAIL': {'success': [], 'failure': []}}}}
+Result for django__django-10999: resolved: True
+2026-09-27 16:20:37,461 - INFO - Attempting to stop container sweb.eval.django__django-10999.gold...
+2026-09-27 16:20:55,208 - INFO - Container sweb.eval.django__django-10999.gold stopped successfully.
+2026-09-27 16:20:55,211 - INFO - Attempting to remove container sweb.eval.django__django-10999.gold...
+2026-09-27 16:20:55,456 - INFO - Container sweb.eval.django__django-10999.gold removed successfully.

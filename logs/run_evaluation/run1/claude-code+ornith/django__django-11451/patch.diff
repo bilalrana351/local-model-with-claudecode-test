@@ -1,0 +1,28 @@
+diff --git a/django/contrib/auth/backends.py b/django/contrib/auth/backends.py
+index f4b1722757..c1aeb8f2fd 100644
+--- a/django/contrib/auth/backends.py
++++ b/django/contrib/auth/backends.py
+@@ -39,6 +39,10 @@ class ModelBackend(BaseBackend):
+     def authenticate(self, request, username=None, password=None, **kwargs):
+         if username is None:
+             username = kwargs.get(UserModel.USERNAME_FIELD)
++        if username is None:
++            return
++        if password is None:
++            password = kwargs.get(UserModel.PASSWORD_FIELD)
+         try:
+             user = UserModel._default_manager.get_by_natural_key(username)
+         except UserModel.DoesNotExist:
+diff --git a/django/contrib/auth/base_user.py b/django/contrib/auth/base_user.py
+index f39c12a350..f95c1982d6 100644
+--- a/django/contrib/auth/base_user.py
++++ b/django/contrib/auth/base_user.py
+@@ -52,6 +52,8 @@ class AbstractBaseUser(models.Model):
+ 
+     REQUIRED_FIELDS = []
+ 
++    PASSWORD_FIELD = 'password'
++
+     # Stores the raw password if set_password() is called so that it can
+     # be passed to password_changed() after the model is saved.
+     _password = None

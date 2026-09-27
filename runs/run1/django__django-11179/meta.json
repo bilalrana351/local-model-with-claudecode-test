@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11179",
+  "wall_s": 182.3,
+  "timed_out": false,
+  "patch_lines": 12,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 19,
+  "agent_duration_s": 179.2,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 5476,
+  "max_prompt_tokens": 27197,
+  "tool_calls": {
+    "Read": 3,
+    "Bash": 14,
+    "Edit": 1
+  },
+  "final_message": "The fix is complete. Here's a summary of what I did:\n\n## Problem\n\nThe `Collector.delete()` method in `django/db/models/deletion.py` has an optimization fast-path (lines 274-280) for deleting a **single object with no dependencies**. When this path was taken, it returned early **without clearing the instance's PK**, whereas the main deletion path (lines 324-326) sets each instance's `pk` to `None` after deletion.\n\nThis meant `instance.delete()` on a model with no related objects/dependencies left `instance.pk` pointing to the now-deleted row's old value instead of `None`.\n\n## Fix\n\nAdded `instance.pk = None` before the early return in the fast path:\n\n```python\n# Optimize for the case with a single obj and no dependencies\nif len(self.data) == 1 and len(instances) == 1:\n    instance = list(instances)[0]\n    if self.can_fast_delete(instance):\n        with transaction.mark_for_rollback_on_error():\n            count = sql.DeleteQuery(model).delete_batch([instance.pk], self.using)\n        instance.pk = None            # \u2190 added\n        return count, {model._meta.label: count}\n```\n\nThis mirrors the behavior of the main path, ensuring the deleted instance's PK is consistently set to `None`.\n\n## Verification\n\n- Reproduced the bug with a standalone script (PK was `1` before deletion, stayed `1` after; now correctly becomes `None`).\n- Ran the relevant test modules: `delete` (41), plus `queries` and `model_regress` \u2014 **all 425 tests pass**.\n- Confirmed only `django/db/models/deletion.py` is modified (1 insertion), with no changes under `tests/`."
+}

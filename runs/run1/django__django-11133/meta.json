@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11133",
+  "wall_s": 344.2,
+  "timed_out": false,
+  "patch_lines": 28,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 22,
+  "agent_duration_s": 342.1,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 11770,
+  "max_prompt_tokens": 33893,
+  "tool_calls": {
+    "Bash": 15,
+    "Read": 3,
+    "Edit": 3
+  },
+  "final_message": "All assertions pass and the existing tests (96 across `httpwrappers` and `responses`) pass with no regressions.\n\n## Summary\n\nThe issue was that `HttpResponse(memoryview(...))` produced `b'<memory at 0x...>'` instead of the actual bytes. I found two related bugs, both rooted in `django/http/response.py`:\n\n**Root cause:**\n- **`memoryview`** has no `__iter__` attribute (it iterates via the sequence protocol yielding integers), so in the `content` setter it fell into the `else` branch and was passed to `make_bytes()`, which `str()`-ified it \u2192 `b'<memory at 0x...>'`.\n- **`bytearray`** (PostgreSQL's `BinaryField` return type in some cases) *does* have `__iter__`, so it wrongly entered the \"iterate the chunks\" branch, yielding integers that each got `str()`-ified \u2192 `b'7712132...'`.\n\n**The fix (two lines changed):**\n\n1. `HttpResponseBase.make_bytes()` \u2014 treat the buffer-protocol types uniformly; `bytes(value)` correctly copies `bytearray`/`memoryview` and returns `bytes` as-is:\n   ```python\n   if isinstance(value, (bytes, bytearray, memoryview)):\n       return bytes(value)\n   ```\n\n2. `HttpResponse.content` setter \u2014 exclude `bytearray`/`memoryview` from the chunk-iteration branch so they route to `make_bytes()` instead of being split into integers:\n   ```python\n   if hasattr(value, '__iter__') and not isinstance(value, (bytes, str, bytearray, memoryview)):\n   ```\n\nSince `make_bytes()` is shared by `HttpResponse` and `StreamingHttpResponse`, `write()`, and the streaming path all benefit.\n\n**Scope note:** the `StreamingHttpResponse` path still yields ints for a bare `bytes`/`memoryview` (it's contractually an iterable of chunks, and this pre-existing behavior is unrelated to the reported `HttpResponse` bug), so I kept the fix focused on `HttpResponse`. No test files were modified."
+}

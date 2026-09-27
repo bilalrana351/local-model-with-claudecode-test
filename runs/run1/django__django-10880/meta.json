@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-10880",
+  "wall_s": 183.4,
+  "timed_out": false,
+  "patch_lines": 13,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 21,
+  "agent_duration_s": 178.3,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 5603,
+  "max_prompt_tokens": 24724,
+  "tool_calls": {
+    "Bash": 17,
+    "Read": 2,
+    "Edit": 1
+  },
+  "final_message": "## Summary\n\nThe issue was a SQL syntax error when a `Count` annotation combined both a `Case` condition and `distinct=True`, producing `COUNT(DISTINCTCASE WHEN ...)` \u2014 no space between `DISTINCT` and `CASE`.\n\n**Root cause:** In `django/db/models/aggregates.py`, the `Aggregate.as_sql()` method set:\n```python\nextra_context['distinct'] = 'DISTINCT' if self.distinct else ''\n```\nThe aggregate template is `'%(function)s(%(distinct)s%(expressions)s)'`. With `distinct=True`, the value `'DISTINCT'` (no trailing space) got concatenated directly against expressions beginning with `CASE`, yielding `DISTINCTCASE`.\n\n**Fix** (`django/db/models/aggregates.py:71`): add a trailing space so it never collides with the following token:\n```python\nextra_context['distinct'] = 'DISTINCT ' if self.distinct else ''\n```\n\n**Verification:**\n- Reproduced the bug, then confirmed the SQL now reads `COUNT(DISTINCT CASE WHEN ...)` and executes cleanly against SQLite with correct results.\n- Ran the relevant test suites: `aggregation aggregation_regress annotations expressions` \u2192 **288 passed, OK** (the only error was a bogus module name `aggregates`, which doesn't exist \u2014 tests live under `aggregation/`).\n\nThe change is a minimal, one-line fix in a non-test source file."
+}

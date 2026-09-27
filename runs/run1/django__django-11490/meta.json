@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11490",
+  "wall_s": 702.7,
+  "timed_out": false,
+  "patch_lines": 15,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 43,
+  "agent_duration_s": 696.2,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 24746,
+  "max_prompt_tokens": 47505,
+  "tool_calls": {
+    "Bash": 30,
+    "Read": 9,
+    "Edit": 3
+  },
+  "final_message": "All tests pass. The fix is complete.\n\n## Summary\n\n**Issue:** Composed queries (e.g. `.union()`, `.intersection()`, `.difference()`) could not change their list of columns when `values()`/`values_list()` was evaluated multiple times. `qs1.union(qs1).values_list('name', 'order').get()` followed by `qs1.union(qs1).values_list('order').get()` returned `('a', 2)` instead of `(2,)`.\n\n**Root cause:** `_combinator_query` in `django/db/models/query.py` placed the *raw, un-cloned* query objects into `combined_queries`:\n\n```python\nclone.query.combined_queries = (self.query,) + tuple(qs.query for qs in other_qs)\n```\n\nIn `qs1.union(qs1)` the same `qs1.query` object appears in both combined queries. Later, `get_combinator_sql` (compiler.py) propagates the composed query's columns onto those combined queries via `set_values(...)`, which **mutates the caller's original queryset**. So after the first `.values_list('name', 'order')` compiled, `qs1.query.values_select` was permanently set to `('name', 'order')`. The second `.union(qs1)` reused that mutated query, and the `not compiler.query.values_select` guard in compiler.py then refused to re-propagate the new `('order',)` columns \u2014 leaving the composed query stuck on the stale columns.\n\n**Fix:** Clone each query object in `_combinator_query` so propagation can never leak onto the user's query objects:\n\n```python\nclone.query.combined_queries = tuple(\n    q.query.clone() for q in (self, *other_qs)\n)\n```\n\nThis eliminates the cross-call state leak, so each composed query computes its columns fresh from its own `values_select`. I verified it:\n- Fixes the reported bug (second call now returns `(2,)`).\n- Preserves the independent-columns case (`qs1.values('name').union(qs1.values('order'))` still yields separate `SELECT name ... UNION SELECT order ...`).\n- Works across `union`, `intersection`, and `difference`.\n\nRelevant tests all pass: `queries`, `reserved_names`, `aggregation`, `expressions` (568 tests, no failures). No test files were "
+}

@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11603",
+  "wall_s": 335.2,
+  "timed_out": false,
+  "patch_lines": 86,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 36,
+  "agent_duration_s": 332.3,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 9478,
+  "max_prompt_tokens": 33145,
+  "tool_calls": {
+    "Bash": 26,
+    "Read": 4,
+    "Edit": 5
+  },
+  "final_message": "The fix is complete and verified. Here's a summary of what I did:\n\n## Problem\n`Avg` and `Sum` aggregates rejected the `distinct=True` keyword argument, raising `TypeError: Avg does not allow distinct.` (and likewise for `Sum`). This was a regression from #28658, which centralized distinct handling in the base `Aggregate` class behind an `allow_distinct` flag \u2014 but `Avg` and `Sum` never had that flag set, so `distinct` now errored instead of being ignored.\n\n## Fix\nAdded `allow_distinct = True` to the `Avg` and `Sum` classes in `django/db/models/aggregates.py`, following the same pattern `Count` already used:\n\n```python\nclass Avg(...):\n    ...\n    allow_distinct = True\n\nclass Sum(...):\n    ...\n    allow_distinct = True\n```\n\nSince `Aggregate.as_sql` already emits `DISTINCT` via its template and `__init__` already processes `distinct`, no other code change was needed. I left `Min`/`Max` unchanged, consistent with the issue's note that it would be \"pointless\" there.\n\n## Verification\n- Real query now generates correct SQL: `SELECT AVG(DISTINCT \"id\") ... , SUM(DISTINCT \"id\") ...`\n- Ran 333 tests across `aggregation`, `aggregation_regress`, `expressions`, `backends.sqlite`, and `expressions_window` \u2014 all pass (skips are pre-existing, e.g. Postgres-only tests without `psycopg2`).\n- Updated docs (`docs/ref/models/querysets.txt`) to document the `distinct` argument on `Avg`/`Sum`, and added a release note in `docs/releases/3.0.txt`.\n\nThe `django/contrib/postgres/aggregates/general.py` file was already correct (`allow_distinct = True` there from #28658), so no change was needed."
+}

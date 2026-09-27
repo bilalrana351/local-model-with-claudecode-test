@@ -1,0 +1,22 @@
+{
+  "instance_id": "django__django-11239",
+  "wall_s": 203.6,
+  "timed_out": false,
+  "patch_lines": 33,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 16,
+  "agent_duration_s": 201.2,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 6491,
+  "max_prompt_tokens": 27379,
+  "tool_calls": {
+    "Bash": 8,
+    "Read": 5,
+    "WebFetch": 1,
+    "Edit": 1
+  },
+  "final_message": "All tests pass (12 ran, 2 skipped \u2014 those require a running PostgreSQL).\n\n## Summary\n\nThe issue was that Django's `dbshell` command for PostgreSQL didn't propagate client-certificate/SSL connection parameters (`sslcert`, `sslkey`, plus the related `sslmode`, `sslrootcert`, `sslcrl`) from `DATABASES['OPTIONS']` to the `psql` interactive shell.\n\n**Root cause:** `DatabaseWrapper.get_connection_params()` in `django/db/backends/postgresql/base.py` already merges `OPTIONS` into the connection params, so the SSL keys are present in `conn_params`. But `DatabaseClient.runshell_db()` in `django/db/backends/postgresql/client.py` only extracted `user`/`host`/`port`/`database`/`password` and ignored the SSL parameters.\n\n**Fix** (`django/db/backends/postgresql/client.py`): Extract `sslmode`, `sslrootcert`, `sslcert`, `sslkey`, and `sslcrl` from `conn_params` and expose them to `psql`/libpq via their corresponding environment variables \u2014 `PGSSLMODE`, `PGSSLROOTCERT`, `PGSSLCERT`, `PGSSLKEY`, `PGSSLCRL` (libpq's uppercase `PG_`-prefixed env var convention). Values are only set when present, so configs without SSL are unaffected.\n\nI verified via a mock that all five SSL params flow into the environment and the command args stay correct, and that the no-SSL case sets no SSL env vars (no regression). Per your instructions, I have not committed the change and did not modify any files under `/testbed/tests`."
+}

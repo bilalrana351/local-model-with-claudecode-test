@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11163",
+  "wall_s": 108.0,
+  "timed_out": false,
+  "patch_lines": 13,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 17,
+  "agent_duration_s": 106.0,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 2035,
+  "max_prompt_tokens": 18553,
+  "tool_calls": {
+    "Bash": 14,
+    "Read": 1,
+    "Edit": 1
+  },
+  "final_message": "Confirmed: `test_unicode_filename` fails without my change too \u2014 it's a pre-existing filesystem/environment issue unrelated to this fix. All other 642 `forms_tests` tests pass.\n\n## Summary\n\nThe issue was in `model_to_dict()` in `/testbed/django/forms/models.py:86`. The condition `if fields and f.name not in fields:` treated an empty list `[]` as falsy, so no fields were filtered out \u2014 returning all fields instead of an empty dict.\n\nFix (minimal, matches the referenced PR):\n\n```python\nif fields is not None and f.name not in fields:\n```\n\nNow `model_to_dict(instance, fields=[])` returns `{}`, while `fields=None` still returns all fields. Verified behavior and ran `forms_tests` (643 tests; the one error is a pre-existing unicode-filename filesystem issue, present with or without my change)."
+}

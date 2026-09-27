@@ -1,0 +1,14 @@
+# Built from Ornith-1.5-35B-A3B-APEX-Compact.gguf (mudler/Ornith-1.5-35B-A3B-APEX-GGUF).
+# The GGUF's embedded Jinja template rejects system messages after the first
+# one, which Claude Code sends. Ollama's built-in qwen3.5 renderer/parser
+# handles those and parses Qwen's XML tool calls.
+FROM ./Ornith-1.5-35B-A3B-APEX-Compact.gguf
+RENDERER qwen3.5
+PARSER qwen3.5
+
+# Claude Code's system prompt + tools need at least 64K context; 128K spills off the GPU on 24 GB
+PARAMETER num_ctx 65536
+
+# Sampling used on the Ornith model card for SWE-bench
+PARAMETER temperature 1.0
+PARAMETER top_p 0.95

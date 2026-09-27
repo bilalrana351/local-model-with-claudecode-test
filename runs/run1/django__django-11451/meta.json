@@ -1,0 +1,21 @@
+{
+  "instance_id": "django__django-11451",
+  "wall_s": 276.1,
+  "timed_out": false,
+  "patch_lines": 28,
+  "empty_patch": false,
+  "touched_tests": false,
+  "untracked_files": [],
+  "num_turns": 26,
+  "agent_duration_s": 271.2,
+  "is_error": false,
+  "stop": "success",
+  "output_tokens": 8236,
+  "max_prompt_tokens": 29866,
+  "tool_calls": {
+    "Bash": 15,
+    "Read": 6,
+    "Edit": 4
+  },
+  "final_message": "Both changes are in place and correct. Here's a summary of what I did.\n\n## Problem\n`ModelBackend.authenticate()` ran `UserModel._default_manager.get_by_natural_key(username)` even when `username` was `None` (e.g. when another authentication backend is used and no username kwarg was supplied). This produced a useless `WHERE \"username\" IS NULL` query and needlessly invoked the expensive default password hasher \u2014 a waste that also widened timing differences across backends.\n\n## Fix\nTwo edits, matching the behavior intended for Django ticket #30695:\n\n1. **`django/contrib/auth/base_user.py`** \u2014 Added `PASSWORD_FIELD = 'password'` to `AbstractBaseUser` so backends can resolve the password kwarg by field name for arbitrary user models.\n\n2. **`django/contrib/auth/backends.py`** \u2014 Short-circuited `ModelBackend.authenticate()`:\n   - Return early if `username` is still `None` after checking the `USERNAME_FIELD` kwarg (eliminates the useless query and the hasher cost).\n   - Fall back to `kwargs.get(UserModel.PASSWORD_FIELD)` when `password` is `None`, so it never reaches `set_password(None)` and never runs the hasher when there's nothing to authenticate with (which also couldn't have returned a user anyway).\n\n## Verification\n- Reproduced the `IS NULL` query before the fix; confirmed it's gone afterward.\n- Normal login, `USERNAME_FIELD`-based kwargs login, and None-username/password cases all behave correctly (no crashes, correct results).\n- Full `auth_tests` suite: **510 tests OK** (including `test_auth_backends`, `test_basic`, `test_models`).\n\nI did not modify any files under `tests/`."
+}
