@@ -1,6 +1,8 @@
 # Local model with Claude Code: SWE-bench Verified test
 
-> The 2-page write-up is [`report/report_latex.pdf`](report/report_latex.pdf) (LaTeX source `report/report_latex.tex`). A Markdown-built copy is [`report/report.pdf`](report/report.pdf).
+> The 2-page write-up is [`report/report.pdf`](report/report.pdf) (LaTeX source `report/report.tex`, build with `tectonic report.tex`).
+>
+> To see what was done without running anything: the report, [`runs/run1/results.md`](runs/run1/results.md) (per-issue results), `runs/run1/<issue>/` (prompt, full agent transcript, patch) and `logs/run_evaluation/run1/` (official harness verdicts).
 
 Claude Code, driven by a local open-weight model, resolved 10 SWE-bench Verified issues out of 13 attempted. Everything runs on one MacBook Pro (M4 Pro, 24 GB). No cloud model is called.
 
@@ -17,19 +19,29 @@ Claude Code, driven by a local open-weight model, resolved 10 SWE-bench Verified
 
 ## Setup
 
+Needs an Apple Silicon Mac with 24 GB+ of memory, [Ollama](https://ollama.com) 0.34+, Docker Desktop, [uv](https://docs.astral.sh/uv/), and about 40 GB of free disk. The large pieces are not in this repo; these commands fetch them.
+
 ```bash
-# model: download the GGUF next to the Modelfile, then build it (see model/Modelfile for the renderer fix)
+# 1. Model: download the GGUF (16.5 GB) next to the Modelfile, then build it (see model/Modelfile for the renderer fix)
 curl -L -o model/Ornith-1.5-35B-A3B-APEX-Compact.gguf \
   https://huggingface.co/mudler/Ornith-1.5-35B-A3B-APEX-GGUF/resolve/main/Ornith-1.5-35B-A3B-APEX-Compact.gguf
 ollama create ornith -f model/Modelfile
 
-# Python env, dataset, images
+# 2. Python env and the SWE-bench Verified dataset
 uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python swebench datasets
-# data/verified.jsonl is SWE-bench/SWE-bench_Verified (test split) saved with datasets' to_json
-# images: docker pull --platform linux/amd64 swebench/sweb.eval.x86_64.django_1776_<id>:latest
+.venv/bin/python -c "from datasets import load_dataset; load_dataset('SWE-bench/SWE-bench_Verified', split='test').to_json('data/verified.jsonl')"
+
+# 3. Linux Claude Code binary that runs inside the containers (version 2.1.283)
+mkdir -p tools && curl -L -o tools/claude-linux-x64 \
+  https://downloads.claude.ai/claude-code-releases/2.1.283/linux-x64/claude && chmod +x tools/claude-linux-x64
+
+# 4. SWE-bench images for the 10 selected issues and the 6-issue extra pool (x86_64, run under emulation on Apple Silicon)
+for id in $(.venv/bin/python -c "import json; print(' '.join(json.load(open('data/selected.json')) + json.load(open('data/extra.json'))))"); do
+  docker pull --platform linux/amd64 "swebench/sweb.eval.x86_64.${id/__/_1776_}:latest"
+done
 ```
 
-Not in this repo, because they are large or re-downloadable: the GGUF (16.5 GB), `.venv/`, `data/verified.jsonl` (the public dataset) and `tools/claude-linux-x64`. `tools/claude-linux-x64` is the Linux x64 Claude Code binary for version 2.1.283, from `https://downloads.claude.ai/claude-code-releases/2.1.283/linux-x64/claude`, checked against that release's `manifest.json`.
+The runner creates the isolated Docker network and the socat relay itself on first use.
 
 ## Run
 

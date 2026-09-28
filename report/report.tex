@@ -2,7 +2,7 @@
 % Report: local coding agent on SWE-bench Verified
 % Bilal Rana
 % Layout follows the Jake Gutierrez (MIT) template used for the CV
-% Build: tectonic report_latex.tex   (needs architecture.pdf: rsvg-convert -f pdf -o architecture.pdf architecture.svg)
+% Build: tectonic report.tex   (needs architecture.png next to it)
 %------------------------
 
 \documentclass[letterpaper,11pt]{article}
@@ -88,14 +88,23 @@
 \section{Architecture}
  \vspace{4pt}
  \begin{center}
-   \includegraphics[width=0.97\textwidth]{architecture.pdf}
+   \includegraphics[width=0.74\textwidth]{architecture.png}
+   \par\vspace{2pt}
+   \parbox{0.97\textwidth}{\centering\small \textbf{Figure 1:} How one issue is attempted and graded.}
  \end{center}
  \vspace{-6pt}
  \resumeItemListStart
-    \resumeItem{Ollama 0.34 serves the model through an Anthropic-compatible Messages endpoint, so Claude Code connects to it via \code{ANTHROPIC\_BASE\_URL}. For each issue, \code{run\_agent.py} starts the issue's official SWE-bench image, which holds the repository at \code{/testbed} on the issue's base commit plus a conda environment where Django's tests run. The runner mounts a Linux Claude Code binary and runs it headless with the issue text as the prompt. When the agent stops, the runner saves \code{git diff} (excluding \code{tests/}) with the transcript and per-issue statistics. The \code{swebench} harness then applies each patch in a fresh container, adds the hidden tests, and marks the issue resolved only if the new tests (FAIL\_TO\_PASS) pass and the existing ones (PASS\_TO\_PASS) still pass.}
+    \resumeItem{Ollama serves the local Ornith-1.5 model through an Anthropic compatible API, so Claude Code can connect to it as a harness without any changes. Grading one issue works like this (Figure 1):}
  \resumeItemListEnd
+ \begin{enumerate}[leftmargin=0.42in, itemsep=1pt, parsep=0pt, topsep=1pt]
+    \item\small \code{run\_agent.py} starts the issue's official SWE-bench container, which holds the repository at the issue's commit plus includes all its dependencies, and sends the issue text to Claude Code inside it so it can work on solving it.
+    \item\small Claude Code (connected to our local model via Ollama) works on the fix. Its only network access is through the socat relay to Ollama, the reason for that is to prevent the model from ``cheating'' by fixing an issue by just downloading the latest version of the library that contains the fix, and not writing any code to solve the issue.
+    \item\small When Claude Code stops, its code changes are saved to the run1 folder.
+    \item\small The swebench harness applies each change in a fresh container and runs the hidden tests. It writes \code{report.json}, which marks the issue resolved only if all the tests pass.
+ \end{enumerate}
 
 %-----------DESIGN DECISIONS-----------
+\newpage
 \section{Design Decisions}
  \resumeItemListStart
     \resumeItem{\textbf{The agent runs inside the task container.} The container has the right Python and dependencies, so the agent can run Django's tests, and it is the sandbox so the agent can do any action freely without the risk of doing something malicious on the system.}
