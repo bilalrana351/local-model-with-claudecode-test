@@ -1,9 +1,3 @@
-# Local model with Claude Code: SWE-bench Verified test
-
-> The 2-page write-up is [`report/report.pdf`](report/report.pdf) (LaTeX source `report/report.tex`, build with `tectonic report.tex`).
->
-> To see what was done without running anything: the report, [`runs/run1/results.md`](runs/run1/results.md) (per-issue results), `runs/run1/<issue>/` (prompt, full agent transcript, patch) and `logs/run_evaluation/run1/` (official harness verdicts).
-
 Claude Code, driven by a local open-weight model, resolved 10 SWE-bench Verified issues out of 13 attempted. Everything runs on one MacBook Pro (M4 Pro, 24 GB). No cloud model is called.
 
 ## Pieces
